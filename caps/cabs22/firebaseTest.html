@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset='utf-8'>
+</head>
+
+<body>
+    <p>Getting started with Firebse</p>
+    <from id='fileForm'>
+        <input type='file' id='uploadFile' value=""/>
+        <input type='button' value='upload' onclick='fileCheck(this.form.file1)'/>
+    </from>
+    <!-- The core Firebase JS SDK is always required and must be listed first -->
+    <script src="https://www.gstatic.com/firebasejs/5.9.1/firebase.js"></script>
+
+    <!-- TODO: Add SDKs for Firebase products that you want to use
+     https://firebase.google.com/docs/web/setup#config-web-app -->
+
+    <script>
+        function fileCheck(file) {
+            const maxSize = 5 * 1024 * 1024
+            let fileSize = 0;
+
+            const browser = navigator.appName;
+
+            if(browser === 'Microsoft Internet Explorer') {
+                let oas = new ActiveXObject('scripting.FileSystemObject');
+                fileSize = oas.getFile(file.value).size;
+            }
+            else {
+                fileSize = file.files[0].size;
+            }
+
+            alert('파일 사이즈 ' + fileSize + ', 최대 파일 사이즈 : 5MB');
+            if(fileSize > maxSize) {
+                alert('첨부파일 사이즈는 5MB 이내로 등록 가능');
+                return;
+            }
+            document.fileForm.submit();
+        }
+        // Your web app's Firebase configuration
+        var firebaseConfig = {
+            apiKey: "AIzaSyC1Os6RIdcGyw48Iho-cZ3CLoFOe-tQGSk",
+            authDomain: "react-test-9ecdd.firebaseapp.com",
+            databaseURL: "https://react-test-9ecdd.firebaseio.com",
+            //projectId: "react-test-9ecdd",
+            storageBucket: "react-test-9ecdd.appspot.com",
+            messagingSenderId: "55998361358"
+            //appId: "1:55998361358:web:f317b234a0db42f4"
+        };
+        // Initialize Firebase
+        firebase.initializeApp(firebaseConfig);
+
+        const storage = firebase.storage();
+        const storageRef = storage.ref();
+        const imageRef = storageRef.child('slideimages');
+
+        console.log(imageRef.fullPath);
+        console.log(imageRef.name);
+        console.log(imageRef.bucket);
+
+
+
+    </script>
+</body>
+
+</html>

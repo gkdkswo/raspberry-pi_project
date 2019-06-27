@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<meta name="viewport" content="width=device-width, initial-scale=0.8">
+	<script src="https://ajax.aspnetcdn.com/ajax/jQuery/jquery-3.3.1.min.js"></script>
+	<title>Good</title>
+	<style>
+	body{
+		background-image: url("/home/pi/Desktop/slide");
+		background-color: #00B2EE;
+		-webkit-background-size: cover;
+		-moz-background-size: cover;
+		-o-background-size: cover;
+		background-size: cover;
+	}
+	.header {
+		margin: auto;
+		minwidth: 400px;
+		margin-top: auto;
+		padding: 10px;
+		font-family:Century Gothic, sans-serif;
+		clor: blue;
+		max-width:800px;
+		height: 100px;
+		border-radius: 10px;
+		margin-top:5px;
+	}
+	</style>
+</head>
+<body>
+	<div class="container">
+		<div class="header">
+			<button onClick="location.href='http://localhost'">driveSync</button>
+			<button onClick="location.href='http://localhost/weather.php'">weather</button>
+			<button onClick="location.href='http://localhost/fullcalendar-4.1.0/demos/google-calendar.html'">calendar</button>
+			<p id ="count">d</p>
+		</div>
+		<div class="center">
+			<iframe src="index2.php" name="c"></iframe></iframe>
+		</div>
+	</div>
+		<script>
+		function startTime() {
+			var timeadd = 'AM';
+			var today = new Date();
+			var h = today.getHours();
+			if(h > 12){
+			h = h - 12;
+			timeadd = 'PM';
+			}
+			var m = today.getMinutes();
+			var s = today.getSeconds();
+			m = checkTime(m);
+			s = checkTime(s);
+			document.getElementById('count').innerHTML = h + ":" + m + ":" + s + " " + timeadd;
+			var t = setTimeout(startTime, 500);
+		}
+		function checkTime(i) {
+			if (i < 10) {i = "0" + i};  // add zero in front of numbers < 10
+			return i;
+		}
+	</script>
+</body>
+</html>

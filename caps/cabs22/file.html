@@ -1,0 +1,293 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width", initial-scail="1.0">
+    <script src="https://www.gstatic.com/firebasejs/5.9.1/firebase.js"></script>
+    <link rel="stylesheet" type="text/css" href="./keyboard.css" />
+    <script type="text/javascript" src="./keyboard.js" charset="UTF-8"></script>
+    <style>
+	
+
+        body {
+            overflow: hidden;
+            font-weight:bolder;
+            background-color:#ffff;
+        }
+        
+		ul { 
+			padding-left:10px;
+			padding-right:10px;
+		
+		}
+		.imageList{
+			margin-bottom:5px;
+		}
+        .button {
+            border: 0;
+            border-radius:10px;
+            color:#fff;
+            background-color: #2f9fff;
+            font-weight: bolder;
+			margin-left:5px;
+        }
+		
+		.filebutton {
+            border: 0;
+            border-radius:10px;
+            color:#fff;
+            background-color: #2f9fff;
+            font-weight: bolder;
+			width:220px;
+        }
+
+        .imageButton {
+            border: 0;
+            opacity: 0;
+            border-radius:10px;
+            color:#fff;
+            background-color: #2f9fff;
+            font-weight: bolder;
+        }
+        .selectB {
+            padding-left:10%;
+			padding-right:10%;
+			 margin-left:10px;
+        }
+        .deleteB {
+		   padding-left:10%;
+		   padding-right:10%;
+           margin-left:5px;
+        }
+		
+        #container {
+            width: 100%;
+        }
+
+        #header {
+			border-radius:10px;
+            background-color:#fff;
+			height:25px;
+            color: white;
+        }
+
+        #functions {
+            border-radius:5px;
+            background-color:#eef4f9;
+            height:25px;
+			margin-top:5px;
+        }
+        
+        #left {
+            border-radius:5px;
+            background-color:#eef4f9;
+            float: left;
+            width:20%;
+            overflow-y: scroll;
+            -webkit-overflow-scrolling:touch;
+			margin-top:5px;
+        }
+
+        #content {
+            border-radius:10px;
+            background-color:white;
+            border-color: darkblue;
+            border-width: 10px;
+            float: left;
+            width: 80%;
+			margin-top:5px;
+      
+        }
+
+		
+    </style>
+</head>
+
+<body>
+    <div id='container'>
+        <div id='header'>menu button here</div>
+        <script src="./menu.js?version=27"></script>
+        <script src="./time.js"></script>
+        <div id='functions'>
+            <form>
+                <input type='file' class='filebutton' multiple='multiple' id='fileSelector'/>
+                <input type='button' class='button' value='upload' id='upload' onclick='uploadFile()'>
+                <input type='button' class='button' value='download' id='download' onclick='downloadFile()'>
+				<span style='float:right; margin-right:10px'>FULL-SCREEN
+                <input id='fullScreen' type="checkbox" value='전체화면'></span>
+                <span style='float:right; margin-right:10px'>SLIDE
+                <input id='slide' type='checkbox' value='슬라이드'></span>
+            </form>
+        </div>
+        <div id='left'>
+            <ul id='imageList'>
+
+            </ul>
+        </div>
+        <div id='content'>
+            <img id="imageContent" width="100%" src=""/>
+        </div>
+    </div>
+</body>
+
+<!-- TODO: Add SDKs for Firebase products that you want to use
+     https://firebase.google.com/docs/web/setup#config-web-app -->
+
+<script>
+
+    const storageRef = firebase.storage().ref('slideimages/');
+    const databaseRef = firebase.database().ref('slideimages/');
+    const imageList = document.getElementById('imageList');
+    const fileSelector = document.getElementById('fileSelector');
+    const content = document.getElementById('content');
+    const imageContent = document.getElementById('imageContent');
+    const fullScreen = document.getElementById('fullScreen');
+    const left = document.getElementById('left');
+    const functions = document.getElementById('functions');
+    //const header = document.getElementById('header');
+    const slide = document.getElementById('slide');
+
+    let photoArray = [];
+    let photoNameArray = [];
+    const firstImageTop = imageContent.style.top;
+    const firstImageLeft = imageContent.style.left;
+
+//eventListeners
+    fullScreen.addEventListener('click', () => {
+        imageContent.style.position = 'fixed';
+        imageContent.style.width = '100%';
+        imageContent.style.top = 0;
+        imageContent.style.left = 0;
+        imageContent.style.height = window.innerHeight +'px';
+    })
+
+    window.addEventListener('load', () => {
+        //functions.style.height = window.innerHeight * 0.05 +'px';
+        //header.style.height = window.innerHeight * 0.1 +'px';
+        left.style.height = (window.innerHeight - 75) +'px';
+        content.style.height = (window.innerHeight - 75) +'px';
+        imageContent.style.height = (window.innerHeight - 75) + 'px';
+    })
+
+    imageContent.addEventListener('click', () => {
+        fullScreen.checked = false;
+        imageContent.style.position = "";
+        imageContent.style.top = firstImageTop;
+        imageContent.style.left = firstImageLeft;
+        imageContent.style.width = '100%';
+        imageContent.style.height = (window.innerHeight - 75)+ 'px';
+    })
+
+    slide.addEventListener('click', () => {
+
+        if (slide.checked === true) {
+            const slideshow = setInterval(() => {
+                if(slide.checked === false) {
+                    clearInterval(slideshow);
+                }
+                let randomNumber = Math.floor(Math.random() * photoArray.length);
+                imageContent.src = photoArray[randomNumber];
+            }, 5000);
+        }
+
+
+    })
+
+//functions
+    const uploadFile = () => {
+
+        const files = fileSelector.files;
+        console.log(files);
+
+        for (i = 0; i < files.length; i++) {
+            let fileName = '' + files[i].name;
+            if(photoNameArray.includes(fileName)) {
+                alert(fileName +' already has been existed');
+                continue;
+            } 
+            let imagesStorageRef = storageRef.child(fileName);
+
+            imagesStorageRef.put(files[i]).then((snapshot) => {
+                let imagesDatabaseRef = databaseRef.push();
+                imagesDatabaseRef.set({
+                    name: fileName
+                })
+            });
+            console.log('Uploaded a file!');
+        }
+        downloadFile();
+    }
+
+
+    const downloadFile = () => {
+        let html = ''; 
+        photoArray = [];
+        photoNameArray = [];
+        databaseRef.on('child_added', (snapshot) => {
+            let imageKey = snapshot.key;
+            let imageName = snapshot.val().name;
+            let downloadImagesStorageRef = storageRef.child(''+imageName);
+
+           photoNameArray.push(imageName);
+           downloadImagesStorageRef.getDownloadURL().then((url)=>{
+               photoArray.push(url);
+               html +=
+                    '<div class="imageList"><image  width="100%" height="60" src="'+url+'" onclick="showImageButtons()"/>'+
+                    '<br><button class="imageButton selectB" onclick="slectImage(\''+url+'\')">선택</button>'+
+                    '<button class="imageButton deleteB" onclick="deleteImage(\''+imageKey+'\')">삭제</button>'+
+                    '</div>';
+           }) 
+        })
+        setTimeout(()=>{
+            imageList.innerHTML = html;
+        }, 3000);
+    }
+
+    const showImageButtons = () => {
+        const imageButton = document.querySelectorAll(".imageButton");
+        imageButton.forEach(button => {
+            button.style.opacity = 0.6;
+        })
+    }
+
+    const slectImage = (url) => {
+        imageContent.setAttribute('src', url);
+        const imageButton = document.querySelectorAll(".imageButton");
+        imageButton.forEach(button => {
+            button.style.opacity = 0;
+        })
+    }
+
+    const deleteImage = (imageKey) => {
+        let imageName = '';
+        let deleteDatabaseRef = databaseRef.child(imageKey+"/");
+        deleteDatabaseRef.on('value', data => {
+            imageName = data.val().name;
+        })
+        deleteDatabaseRef.set({
+
+        })
+        
+        
+        let deleteImagesStorageRef = storageRef.child(imageName);
+        deleteImagesStorageRef.delete().then(()=>{
+            console.log('image delete successed');
+        }).catch((error)=>{
+            console.log(error);
+        })
+
+        const imageButton = document.querySelectorAll(".imageButton");
+        imageButton.forEach(button => {
+            button.style.opacity = 0;
+        })
+
+        downloadFile();
+    }
+
+
+
+    downloadFile();
+</script>
+
+</html>

@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1.0,minimum-scale=1.0,maximum-scale=1.0">
+    <title>alarm</title>
+    <link rel="stylesheet" type="text/css" href="./body.css?version=2321141222" />
+    <link rel="stylesheet" type="text/css" href="./header.css?version=2212241222" />
+    <!--<link rel="stylesheet" type="text/css" href="./backImage.css?version=142222" />-->
+    <link rel="stylesheet" type="text/css" href="./keyboard.css" />
+    <script type="text/javascript" src="./keyboard.js" charset="UTF-8"></script>
+    <script src="https://www.gstatic.com/firebasejs/5.9.1/firebase.js"></script>
+    <style>
+        #alarm {
+            padding-top: 30px;
+			margin: auto;
+			width: 400px;
+			background-color:#2f9ff;
+			margin-left:200px;
+        }
+		#setAlarmDate{
+			width: 300px;
+			height: 30px;
+			font-size:20px;
+		}
+		#workList{
+			width: 260px;
+			height: 30px;
+			font-size:20px;
+		}
+		#setAlarmDateButton{
+			background-color:#337ab7;
+			width:25px;
+			height:70px;
+			border-radius:10px;
+			text-align:center;
+			margin:0 auto;
+			color:#fff;
+			font-size:20px;
+			vertical-align:middle;
+			margin-left:10px;
+			
+		}
+		table{
+			background-color:#eef4f9;
+			padding:20px;
+			border-radius:10px;
+		}
+		.deletebutton{
+			border: 0;
+            border-radius:10px;
+            color:#fff;
+            background-color: #337ab7;
+            font-weight: bolder;
+			margin-left:5px;
+		}
+		
+    </style>
+</head>
+
+<body>
+    <div id='container'>
+        <div id='header'>
+            <script src='./menu.js?version=19142921222222999'></script>
+            <script src='./time.js?version=233322122322223'></script>
+        </div>
+        <div id='alarm'>
+            <form onsubmit="return false">
+				<table>
+				<tr>
+					<td rowspan="2" style="padding-right:20px"><img src="./alarm2.svg" style="height:60px"/></td>
+					<td ><input id="setAlarmDate" type="datetime-local" value="" /> </br></td>
+					<td rowspan="2"><input class="button" id="setAlarmDateButton" type="button" onclick="setAlarmButton()" value="+"></br></td>
+				</tr>
+				<tr>
+					<td ><input id="workList" type="text" value="" class="keyboardInput" onkeypress="return captureReturnKey(event)"></td>
+				</tr>
+				<tr>
+					
+				</tr>
+				</table>
+			</form>
+
+            <ul id="showWorkList">
+        </div>
+    </div>
+
+    </ul>
+    <p id='zz'></p>
+    <script>
+            function captureReturnKey(e) {
+                if (e.keyCode == 13 ) {
+                    setAlarmButton();
+                }
+            }
+
+         window.addEventListener('load', () => {
+            if (Notification && Notification.permission !== 'granted') {
+                Notification.requestPermission((status) => {
+                    if (!Notification.permission !== status) {
+                        Notification.permission = status;
+                    }
+                });
+            } 
+
+            if(Notification && Notification.permission === 'denied') {
+                alert('알람기능을 꺼놓았습니다.');
+            }
+        });
+
+        let time;
+        const container = document.getElementById('container');
+        container.style.width = (window.innerWidth - 17) + 'px';
+        container.style.height = (window.innerHeight - 16) + 'px';
+        
+        const setAlarmDate = document.getElementById("setAlarmDate");
+        const wokrList = document.getElementById("workList");
+        const showWorkList = document.getElementById("showWorkList");
+        // Initialize Firebase
+
+        let alarmRef = firebase.database().ref().child('alarmDatabase')
+		let deleteRef = alarmRef;
+		
+		deleteRef.on('child_removed', (snap)=>{
+			console.log(snap.val().toDo);
+			writeWorkList();
+		});
+
+        setTimeout(() => {
+            writeWorkList();
+        }, 2000);
+
+        function checkAlarm() {
+            let time = '' + new Date();
+            alarmRef.on('child_added', data => {
+                let dataKey = data.key;
+				let alarmTime = '' + new Date(data.val().alarmTime);
+                if (alarmTime === time) {
+                    let noti = new Notification(data.val().toDo);
+                    let audio = new Audio('./alarm.ogg');
+                    audio.autoplay = true;
+                    //speechSynthesis.speak(new SpeechSynthesisUtterance(data.val().toDo));
+                    let deleteAlarmRef = firebase.database().ref('alarmDatabase/' + data.key + '/');
+                    deleteAlarmRef.set({
+
+                    });
+                }
+                writeWorkList();
+            });
+        }
+
+        setInterval(checkAlarm, 500);
+
+        function setSection(time) {
+            if (time < 10) {
+                return '0' + time;
+            }
+            else return time;
+        }
+
+
+
+        function setAlarmButton() {
+            const alarmKey = new Date(setAlarmDate.value);
+            const currentTimeForKey = new Date();
+            const toDo = workList.value;
+
+            if (setAlarmDate.value !== "" && alarmKey > currentTimeForKey) {
+                if (localStorage.getItem(setAlarmDate.value)) {
+                    alert('해당 시간에 리스트가 이미 존재합니다.');
+                    return;
+                } else {
+                    let addAlarmRef = alarmRef.push();
+                    addAlarmRef.set(
+                        {
+                            beSettedTime: '' + currentTimeForKey,
+                            alarmTime: '' + alarmKey,
+                            toDo: toDo,
+                        },
+                    )
+                    localStorage.setItem('!' + currentTimeForKey, setAlarmDate.value);
+                    localStorage.setItem(setAlarmDate.value, workList.value);
+                    writeWorkList();
+                }
+            } else if (setAlarmDate.value === "") {
+                alert("날짜를 입력해주세요");
+            } else if (alarmKey < currentTimeForKey) {
+                alert('현재시간보다 더 큰 시간으로 설정해주세요');
+            } else {
+                alert('error');
+            }
+        }
+
+        function showAlarm() {
+            for (i = 0; i < localStorage.length; i++) {
+                console.log(localStorage.getItem(localStorage.key(i)));
+            }
+        }
+
+
+
+        function writeWorkList() {
+            let plusWorkHtml = "";
+
+            alarmRef.on('child_added', data => {
+                let time = new Date(data.val().alarmTime);
+				//console.log(time);
+                let toDo = data.val().toDo;
+                let beSettedTime = data.val().beSettedTime;
+                let key = data.key;
+                let showSettedTime = '[' + time.getFullYear() + '-' +
+                    setSection(time.getMonth() + 1) + '-' +
+                    setSection(time.getDate()) + ' ' +
+                    setSection(time.getHours()) + ':' +
+                    setSection(time.getMinutes()) + ']';
+                plusWorkHtml += '<li id="' + key + '">' + toDo +
+                    ' ' + showSettedTime + ' ' +
+                    '<button class="deletebutton" onclick="deleteWorkList(' + "'" + key + "'" + ')">delete</button>' +
+                    '</li>';
+            })
+            showWorkList.innerHTML = plusWorkHtml;
+        }
+
+        function deleteWorkList(key) {
+            console.log(key);
+            let deleteAlarmRef = firebase.database().ref('alarmDatabase/' + key + '/');
+            deleteAlarmRef.set({
+
+            })
+            writeWorkList();
+        }
+
+    </script>
+</body>
+
+</html>
